@@ -10,10 +10,10 @@ const App = () => {
     const handleEdit = (book) => {
         setCurrentBook(book);
         setView('edit') ;
+   
+
+
     };
-
-
-
 
     const handleCancel = () => {
         setCurrentBook(null);
@@ -38,7 +38,7 @@ const App = () => {
                     book={currentBook} 
                     onSave={() => setView('list')} 
                     onCancel={handleCancel} 
-                    
+
                 />
             )}
         </div>

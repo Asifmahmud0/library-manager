@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 class Library_DB {
 
-
+    
     public static function get_table_name()  {
         global $wpdb;
         return $wpdb->prefix . 'library_books';
