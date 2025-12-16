@@ -4,24 +4,25 @@ import apiFetch from '@wordpress/api-fetch';
 const BookList = ({ onEdit }) => {
     const [books, setBooks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(''); // New: Memory for search text
+    const [searchTerm, setSearchTerm] = useState(''); // State for search input
 
     // Initial load
     useEffect(() => {
         fetchBooks();
     }, []);
 
-    // New: Listen for typing (Debounce logic)
+    // Effect: Listen for typing (Debounce logic)
+    // This waits 500ms after you stop typing before calling the API
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
             fetchBooks();
-        }, 500); // Wait 500ms after user stops typing
+        }, 500);
 
         return () => clearTimeout(delayDebounce);
     }, [searchTerm]);
 
     const fetchBooks = () => {
-        // Updated: Add search parameter to the URL
+        // If searchTerm exists, add it to the URL. Otherwise, just get all books.
         const path = searchTerm 
             ? `/library/v1/books?search=${searchTerm}` 
             : '/library/v1/books';
@@ -41,13 +42,13 @@ const BookList = ({ onEdit }) => {
             path: `/library/v1/books/${id}`,
             method: 'DELETE'
         }).then(() => {
-            fetchBooks(); // Refresh list
+            fetchBooks(); // Refresh list after delete
         });
     };
 
     return (
         <div>
-            {/* New: Search Bar Area */}
+            {/* --- Search Bar Section --- */}
             <div className="tablenav top">
                 <div className="alignleft actions">
                     <input 
@@ -68,7 +69,7 @@ const BookList = ({ onEdit }) => {
                 </div>
             </div>
 
-            {/* Table Area */}
+            {/* --- Table Section --- */}
             {isLoading ? (
                 <p>Loading books...</p>
             ) : (
@@ -92,11 +93,16 @@ const BookList = ({ onEdit }) => {
                                     <td>{book.author}</td>
                                     <td>{book.publication_year}</td>
                                     <td>
-                                        {/* Uses the CSS class from Bonus 1 if you added it */}
+                                        {/* Shows status color if you added the CSS */}
                                         <span className={`status-${book.status}`}>{book.status}</span>
                                     </td>
                                     <td>
-                                        <button className="button button-small" onClick={() => onEdit(book)}>Edit</button>
+                                        <button 
+                                            className="button button-small" 
+                                            onClick={() => onEdit(book)}
+                                        >
+                                            Edit
+                                        </button>
                                         <button 
                                             className="button button-small button-link-delete" 
                                             onClick={() => deleteBook(book.id)} 

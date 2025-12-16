@@ -98,7 +98,7 @@ class Library_Admin {
 
             /* Status Colors */
             .status-available {
-            color: #007cba;
+            color: #007C00;
             background: #e3f2fd; 
             padding: 4px 8px; 
             border-radius: 4px;
@@ -112,7 +112,7 @@ class Library_Admin {
               font-weight: bold;
                }
             .status-unavailable { 
-            color: #666;
+            color: #f2e93aff;
              background: #f0f0f1; 
              padding: 4px 8px; 
              border-radius: 4px;

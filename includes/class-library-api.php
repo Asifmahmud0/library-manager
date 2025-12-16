@@ -55,22 +55,58 @@ class Library_API {
     }
 
     public function get_books( $request ) {
-        global $wpdb;
+    global $wpdb;
+
+    // 1. Get parameters
+    $page     = isset( $request['page'] ) ? intval( $request['page'] ) : 1;
+    $per_page = isset( $request['per_page'] ) ? intval( $request['per_page'] ) : 10;
+    $search   = isset( $request['search'] ) ? sanitize_text_field( $request['search'] ) : '';
+
+    // 2. Calculate Offset
+    $offset = ( $page - 1 ) * $per_page;
+
+    // 3. Build Query
+    $query = "SELECT * FROM {$this->table_name}";
+    $count_query = "SELECT COUNT(*) FROM {$this->table_name}";
+    $args = [];
+
+    // 4. Add Search Logic
+    if ( ! empty( $search ) ) {
+        $search_term = '%' . $wpdb->esc_like( $search ) . '%';
+        $where_clause = " WHERE title LIKE %s OR author LIKE %s";
         
-        $results = $wpdb->get_results( "SELECT * FROM {$this->table_name} ORDER BY created_at DESC" );
-        return rest_ensure_response( $results );
+        $query .= $where_clause;
+        $count_query .= $where_clause;
+        
+        array_push( $args, $search_term, $search_term );
     }
 
-    public function get_book( $request ) {
-        global $wpdb;
-        $id = $request['id'];
-        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE id = %d", $id ) );
+    // 5. Add Pagination
+    $query .= " ORDER BY created_at DESC LIMIT %d OFFSET %d";
+    array_push( $args, $per_page, $offset );
 
-        if ( ! $row ) {
-            return new WP_Error( 'no_book', 'Book not found', [ 'status' => 404 ] );
-        }
-        return rest_ensure_response( $row );
+    // 6. Execute
+    if ( ! empty( $args ) ) {
+        $results = $wpdb->get_results( $wpdb->prepare( $query, $args ) );
+        
+        // Remove limit/offset args for the count query
+        // (We only need the search terms for counting)
+        $count_args = array_slice( $args, 0, count( $args ) - 2 ); 
+        $total_items = !empty($count_args) 
+            ? $wpdb->get_var( $wpdb->prepare( $count_query, $count_args ) )
+            : $wpdb->get_var( $count_query );
+    } else {
+        $results = $wpdb->get_results( $query ); // Fallback (shouldn't happen with defaults)
+        $total_items = $wpdb->get_var( $count_query );
     }
+
+    // 7. Return Data + Headers for Pagination
+    $response = new WP_REST_Response( $results );
+    $response->header( 'X-WP-Total', $total_items );
+    $response->header( 'X-WP-TotalPages', ceil( $total_items / $per_page ) );
+
+    return $response;
+}
 
             public function create_book( $request ) {
         global $wpdb;
@@ -142,7 +178,7 @@ class Library_API {
         return rest_ensure_response( $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE id = %d", $id ) ) );
     }
 
-    
+
             public function delete_book( $request ) {
         global $wpdb;
         $id = $request['id'];
